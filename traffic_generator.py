@@ -23,9 +23,16 @@ class TrafficGenerator:
         # TODO: check if needed for final sims
         np.random.seed(1729)
 
-    def new_cars(self, start_time=None, network=None):
+    def new_demand(self):
+        #  compute the demand for new OD traffic
+        demand = np.random.poisson(self.demand_df['lambda'])
+        return demand
 
-        new_traffic = np.random.poisson(self.demand_df['lambda'])  # number of new cars
+    def new_cars(self, start_time=None, network=None, new_traffic=None):
+
+        if new_traffic is None:
+            new_traffic = np.random.poisson(self.demand_df['lambda'])  # number of new cars
+
         new_traffic_df = self.demand_df[new_traffic > 0]  # identifying appropriate OD pairs
 
         new_cars = []  # create new car list
@@ -43,7 +50,8 @@ class TrafficGenerator:
                           origin=origin,
                           destination=destination,
                           edge_path=network.shortest_path(origin, destination),
-                          start_time=start_time)
+                          start_time=start_time,
+                          estimated_trip_time=network.estimate_travel_time(origin, destination))
 
                 self.cars_generated += 1
 

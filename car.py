@@ -23,7 +23,8 @@ class Car:
                  origin=None,
                  destination=None,
                  edge_path=None,
-                 start_time=None):
+                 start_time=None,
+                 estimated_trip_time=None):
 
         self.id = car_id
         self.origin = origin
@@ -33,6 +34,7 @@ class Car:
         self.current_edge_progress = 0  # 0 is start of an edge, 1 is completion of edge
         self.start_time = start_time
         self.finish_time = start_time
+        self.estimated_trip_time = estimated_trip_time
         self.completed_trip = False
 
     def update_location(self, network=None, delta_t=None):

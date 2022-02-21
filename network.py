@@ -13,13 +13,11 @@ class Network:
 
         self.num_edges = self.df_edges.shape[0]
         self.num_vertices = self.df_vertices.shape[0]
-        self.edge_capacity = (self.df_edges['capacity'] / 2.4).to_list()  # TODO: fixme
+        self.edge_capacity = (self.df_edges['capacity'] / 2.4).to_list()  # TODO: check
         self.edge_max_speed = self.df_edges['speed'].to_list()
         self.edge_distance = self.df_edges['length'].to_list()
 
         self.nodes_to_edge = self._compute_nodes_to_edge()
-        # self.edge_to_nodes = None
-        # self._initialize_network()  # initialize above network parameters
 
         # Current traffic state of the network
         self.traffic_count = np.zeros(self.num_edges)  # zero cars on all edges
@@ -28,6 +26,8 @@ class Network:
         self.latency = [self.edge_distance[e]/self.edge_max_speed[e] for e in range(self.num_edges)]
 
         self.predecessor_matrix = None
+        self.min_distance_matrix = None
+
         self.num_cars_generated = 0
 
     def _compute_nodes_to_edge(self):
@@ -39,7 +39,7 @@ class Network:
 
         return n2e
 
-    def _counts_to_latency(self):
+    def _counts_to_latency(self, traffic_count):
         # TODO: fixme
         """
         Use self.traffic_count data
@@ -53,33 +53,39 @@ class Network:
 
             min_latency = self.edge_distance[e] / self.edge_max_speed[e]
 
-            if self.traffic_count[e] <= self.edge_capacity[e]:
+            if traffic_count[e] <= self.edge_capacity[e]:
                 latency.append(min_latency)
             else:
                 latency.append(min_latency +
-                               alpha * (self.traffic_count[e] - self.edge_capacity[e]) ** 4)
+                               alpha * (traffic_count[e] - self.edge_capacity[e]) ** 4)
 
         return latency
 
-    def shortest_path(self, origin, destination):
-
-        # Cautionary check if predecessor matrix is not initialized
-        if self.predecessor_matrix is None:
-            self._update_predecessor_matrix()
+    def _path_from_predecessor(self, origin, destination, predecessor_matrix):
 
         # Extract the shortest path in terns of the vertex sequence
         vertex_path = [destination]
         current = destination
         while current != origin:
-            pre = self.predecessor_matrix[origin, current]
+            pre = predecessor_matrix[origin, current]
             vertex_path.insert(0, pre)
             current = pre
 
         # Extract edge sequence from vertex sequence
         edge_path = []
         for i in range(len(vertex_path) - 1):
-            od = (vertex_path[i], vertex_path[i+1])
+            od = (vertex_path[i], vertex_path[i + 1])
             edge_path.append(self.nodes_to_edge[od])
+
+        return edge_path
+
+    def shortest_path(self, origin, destination):
+
+        # Cautionary check if predecessor matrix is not initialized
+        if self.predecessor_matrix is None:
+            self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)
+
+        edge_path = self._path_from_predecessor(origin, destination, self.predecessor_matrix)
 
         return edge_path
 
@@ -92,14 +98,14 @@ class Network:
             self.traffic_count[current_edge] += 1
 
         # call the counts to latency function
-        self.latency = self._counts_to_latency()
+        self.latency = self._counts_to_latency(self.traffic_count)
 
         # update predecessor matrix that stores the shortest paths
-        self._update_predecessor_matrix()
+        self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)
 
         return None
 
-    def _update_predecessor_matrix(self):
+    def _update_predecessor_matrix(self, latency):
         """
         use the current latency estimates to update the predecessor matrix
         return: none
@@ -110,13 +116,18 @@ class Network:
         for i in range(self.num_edges):
             orig = int(self.df_edges.iloc[i]['edge_tail'])
             dest = int(self.df_edges.iloc[i]['edge_head'])
-            adj[orig, dest] = self.latency[i]
+            adj[orig, dest] = latency[i]
 
         # compute the shortest paths
-        _, self.predecessor_matrix = shortest_path(adj, directed=True, return_predecessors=True)
+        dist, pre = shortest_path(adj, directed=True, return_predecessors=True)
+
+        return dist, pre
 
     def edge_length(self, edge_index):
         return self.edge_distance[edge_index]
 
     def edge_speed(self, edge_index):
         return self.latency[edge_index]
+
+    def estimate_travel_time(self, origin, destination):
+        return self.min_distance_matrix[origin, destination]
