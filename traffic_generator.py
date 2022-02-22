@@ -12,7 +12,8 @@ class TrafficGenerator:
         self.delta_t = delta_t
 
         # load data
-        self.demand_df = pd.read_csv("Locations/SiouxFalls/od.csv")
+        self.city = 'Chicago'
+        self.demand_df = pd.read_csv("Locations/" + self.city + "/od.csv")
 
         # poisson arrival rate
         self.demand_df['lambda'] = self.demand_df['volume'] / (24*60*60) * delta_t
@@ -41,6 +42,7 @@ class TrafficGenerator:
         for index in range(new_traffic_df.shape[0]):
 
             # introducing multiple cars within the same OD pair
+            # TODO: Can potentially platoon these cars into one attribute
             for _ in range(new_traffic[index]):
 
                 origin = int(new_traffic_df.iloc[index]['origin'])

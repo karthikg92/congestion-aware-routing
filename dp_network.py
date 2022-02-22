@@ -39,7 +39,8 @@ class DPNetwork(Network):
         self.dp_latency = self._counts_to_latency(self.dp_traffic_counts)
 
         # update predecessor matrix that stores the shortest paths
-        self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)
+        self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)  # TODO:
+        # Dont need to compute this!
         self.dp_min_distance_matrix, self.dp_predecessor_matrix = self._update_predecessor_matrix(self.dp_latency)
 
         return None

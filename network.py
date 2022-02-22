@@ -8,27 +8,35 @@ class Network:
 
     def __init__(self):
 
-        self.df_edges = pd.read_csv("Locations/SiouxFalls/edges.csv")
-        self.df_vertices = pd.read_csv("Locations/SiouxFalls/vertices.csv")
+        self.city = 'Chicago'
+
+        self.df_edges = pd.read_csv("Locations/" + self.city + "/edges.csv")
+        self.df_vertices = pd.read_csv("Locations/" + self.city + "/vertices.csv")
 
         self.num_edges = self.df_edges.shape[0]
         self.num_vertices = self.df_vertices.shape[0]
-        self.edge_capacity = (self.df_edges['capacity'] / 2.4).to_list()  # TODO: check
-        self.edge_max_speed = self.df_edges['speed'].to_list()
+
+        self.edge_max_speed = (self.df_edges['speed'] * 1000 / 3600).to_list()
         self.edge_distance = self.df_edges['length'].to_list()
+        self.edge_capacity = self._compute_c()
 
         self.nodes_to_edge = self._compute_nodes_to_edge()
 
         # Current traffic state of the network
         self.traffic_count = np.zeros(self.num_edges)  # zero cars on all edges
 
-        # Current latency of network
+        # Current latency of network. Just for initialization
         self.latency = [self.edge_distance[e]/self.edge_max_speed[e] for e in range(self.num_edges)]
 
         self.predecessor_matrix = None
         self.min_distance_matrix = None
 
         self.num_cars_generated = 0
+
+    def _compute_c(self):
+        flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
+        c = [flow[i] * self.edge_distance[i] / self.edge_max_speed[i] for i in range(len(flow))]
+        return c
 
     def _compute_nodes_to_edge(self):
         n2e = {}
@@ -40,24 +48,21 @@ class Network:
         return n2e
 
     def _counts_to_latency(self, traffic_count):
-        # TODO: fixme
+        # TODO: confirm
         """
         Use self.traffic_count data
         Return: latency array
-        Formula:    latency[e] = length[e]/max_speed[e] if flow[e] < capacity
-                    latency[e] = length[e]/max_speed[e] + alpha * (flow[e]-capacity[e])^4 if flow[e] > capacity
+        Formula:    a = length[e]/max_speed[e]
+                    b = 0.15
+
+        latency[e] = a (1 + b * (counts[e] / capacity[e])^4 )
         """
-        alpha = 1e-1
+        b = 0.15
         latency = []
         for e in range(self.num_edges):
 
-            min_latency = self.edge_distance[e] / self.edge_max_speed[e]
-
-            if traffic_count[e] <= self.edge_capacity[e]:
-                latency.append(min_latency)
-            else:
-                latency.append(min_latency +
-                               alpha * (traffic_count[e] - self.edge_capacity[e]) ** 4)
+            a = self.edge_distance[e] / self.edge_max_speed[e]  # Can save it as an object attribute
+            latency.append(a * (1 + b * (traffic_count[e] / self.edge_capacity[e]) ** 4))
 
         return latency
 
@@ -127,7 +132,7 @@ class Network:
         return self.edge_distance[edge_index]
 
     def edge_speed(self, edge_index):
-        return self.latency[edge_index]
+        return self.edge_distance[edge_index] / self.latency[edge_index]
 
     def estimate_travel_time(self, origin, destination):
         return self.min_distance_matrix[origin, destination]

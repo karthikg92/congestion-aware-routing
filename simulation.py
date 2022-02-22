@@ -90,4 +90,24 @@ class Simulation:
         Examples of statistics that might be relevant?
         Error in travel time prediction for each car
         """
+
+        """
+        Metrics:
+            For a car, difference in trip time between private and non-private version
+            Total trip time
+            When are cars assigned the ''same'' route? (at most 10% of edges are different?)
+        
+        Scenarios:
+            Low demand
+            Baseline demand <- currently using
+            High demand 
+            
+            Low capacity
+            Baseline capacity <- currently being used
+            High capacity
+            
+            Maybe consider one more big network? Nope for now! 
+        """
+
+
         return None

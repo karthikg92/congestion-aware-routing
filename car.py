@@ -4,7 +4,7 @@ Class for each car
 State of each car:
 ID
 Location
-Shortest path
+Planned path
 
 Methods:
 Update location
