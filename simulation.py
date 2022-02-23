@@ -138,7 +138,7 @@ class Simulation:
         """
 
         lambda_path = fname.split('/')[0] + '/lambda_'
-        if self.demand_scenario is None:
+        if self.demand_scenario is None or self.demand_scenario == 'baseline':
             lambda_path = lambda_path + 'baseline.csv'
         if self.demand_scenario == 'low':
             lambda_path = lambda_path + 'low.csv'
@@ -149,7 +149,7 @@ class Simulation:
         lambda_df.to_csv(lambda_path, index=False, sep=',')
 
         capacity_path = fname.split('/')[0] + '/capacity_'
-        if self.capacity_scenario is None:
+        if self.capacity_scenario is None or self.capacity_scenario == 'baseline':
             capacity_path = capacity_path + 'baseline.csv'
         if self.capacity_scenario == 'low':
             capacity_path = capacity_path + 'low.csv'
