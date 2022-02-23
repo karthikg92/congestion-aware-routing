@@ -18,7 +18,6 @@ Adding privacy leads to minimal impact (across the three different capacity)
 
 Result # 3:
 Higher the privacy requirement, higher the loss in performance
-
     - Vary epsilon, and plot the increase in total travel time for the three different capacity profiles
 
 """
@@ -27,3 +26,4 @@ Higher the privacy requirement, higher the loss in performance
 """
 Result # 1: Capacities on most links are large enough to fall into our analysis regime
 """
+
