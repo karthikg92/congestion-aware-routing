@@ -16,6 +16,7 @@ class Simulation:
         self.max_time = 3600  # maximum number of time steps for the simulation
         self.delta_t = 10  # time in seconds per simulation step
         self.t = 0  # current time index of simulation
+        self.counts_update_time = 120  # time intervals at which counts are updated
         self.network = Network(capacity_scenario=capacity_scenario)  # road network with users
         self.dp_network = DPNetwork(eps=0.01, capacity_scenario=capacity_scenario)  # road network with DP routing
         self.traffic_generator = TrafficGenerator(delta_t=self.delta_t, demand_scenario=demand_scenario)
@@ -29,8 +30,9 @@ class Simulation:
         # Looping through every time step for the simulation
         for t in range(self.max_time):
 
-            self.network.update_latency(self.cars)  # update latency as a function of active cars
-            self.dp_network.update_latency(self.dp_cars)  # update latency for DP network
+            if t % int(self.counts_update_time / self.delta_t) == 0:
+                self.network.update_latency(self.cars)  # update latency as a function of active cars
+                self.dp_network.update_latency(self.dp_cars)  # update latency for DP network
 
             # generate demand that can be sent to the DP and non-DP network
             new_demand = self.traffic_generator.new_demand()
