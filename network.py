@@ -147,7 +147,7 @@ class Network:
         path = self.shortest_path(origin, destination)
         tt = 0
         for edge_index in path:
-            tt = self.latency[edge_index]
+            tt += self.latency[edge_index]
         return tt
 
     def edge_capacity_list(self):

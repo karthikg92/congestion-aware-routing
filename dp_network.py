@@ -65,5 +65,5 @@ class DPNetwork(Network):
         path = self.shortest_path(origin, destination)
         tt = 0
         for edge_index in path:
-            tt = self.dp_latency[edge_index]
+            tt += self.dp_latency[edge_index]
         return tt
