@@ -10,7 +10,7 @@ from traffic_generator import TrafficGenerator
 
 class Simulation:
 
-    def __init__(self, demand_scenario=None, capacity_scenario=None):
+    def __init__(self, demand_scenario=None, capacity_scenario=None, eps=0.01):
         self.demand_scenario = demand_scenario
         self.capacity_scenario = capacity_scenario
         self.max_time = 3600  # maximum number of time steps for the simulation
@@ -18,7 +18,7 @@ class Simulation:
         self.t = 0  # current time index of simulation
         self.counts_update_time = 120  # time intervals at which counts are updated
         self.network = Network(capacity_scenario=capacity_scenario)  # road network with users
-        self.dp_network = DPNetwork(eps=0.01, capacity_scenario=capacity_scenario)  # road network with DP routing
+        self.dp_network = DPNetwork(eps=eps, capacity_scenario=capacity_scenario)  # road network with DP routing
         self.traffic_generator = TrafficGenerator(delta_t=self.delta_t, demand_scenario=demand_scenario)
         self.cars = []  # list of current cars in the network
         self.dp_cars = []  # list of current cars routed with DP
@@ -96,12 +96,12 @@ class Simulation:
             For a car, difference in trip time between private and non-private version
             Total trip time
             When are cars assigned the ''same'' route? (at most 10% of edges are different?)
-
         """
 
         """
         Efficiently store information in a dictionary with id = car.id
         """
+
         stat = {}
 
         completed_car_id = [car.id for car in self.completed_trips]
@@ -129,10 +129,8 @@ class Simulation:
         stat_df['tt_est_error'] = stat_df['tt'] - stat_df['est_tt']
         stat_df['dp_tt_est_error'] = stat_df['dp_tt'] - stat_df['dp_est_tt']
 
-        # retaining only relevant columns
+        # retaining only relevant columns and saving the results
         stat_df.drop(columns=['path', 'dp_path'], inplace=True)
-
-        # saving dataframe as csv
         stat_df.to_csv(fname + '.csv', index=False, sep=',')
 
         """
