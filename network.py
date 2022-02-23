@@ -30,6 +30,10 @@ class Network:
         # Current latency of network. Just for initialization
         self.latency = [self.edge_distance[e]/self.edge_max_speed[e] for e in range(self.num_edges)]
 
+        # track link utilization
+        self.edge_utilization = np.zeros(self.num_edges)
+        self.num_latency_updates = 0
+
         self.predecessor_matrix = None
         self.min_distance_matrix = None
 
@@ -41,7 +45,6 @@ class Network:
 
         if self.capacity_scenario == 'low':
             c = [0.5 * capacity for capacity in c]
-
         if self.capacity_scenario == 'high':
             c = [1.5 * capacity for capacity in c]
 
@@ -117,6 +120,17 @@ class Network:
         # update predecessor matrix that stores the shortest paths
         self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)
 
+        # update link utilization
+        self.edge_utilization = self._update_edge_utilization(self.traffic_count)
+
+        # update capacity of edges TODO: revisit
+        flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
+        c = [flow[i] * self.edge_distance[i] / self.edge_speed(i) for i in range(len(flow))]
+        self.edge_capacity = c
+
+        # for e in range(self.num_edges):
+        #     self.edge_capacity[e] = self.latency[e] * self.df_edges['capacity']
+
         return None
 
     def _update_predecessor_matrix(self, latency):
@@ -136,6 +150,15 @@ class Network:
         dist, pre = shortest_path(adj, directed=True, return_predecessors=True)
 
         return dist, pre
+
+    def _update_edge_utilization(self, traffic):
+        edge_utilization = np.zeros(self.num_edges)
+        for i in range(self.num_edges):
+            total_traffic = self.edge_utilization[i] * self.edge_capacity[i] * self.num_latency_updates
+            new_traffic = traffic[i]
+            edge_utilization[i] = (total_traffic + new_traffic) / (self.num_latency_updates + 1) / self.edge_capacity[i]
+        self.num_latency_updates += 1
+        return edge_utilization
 
     def edge_length(self, edge_index):
         return self.edge_distance[edge_index]

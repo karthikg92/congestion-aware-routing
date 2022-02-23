@@ -13,7 +13,7 @@ class Simulation:
     def __init__(self, demand_scenario=None, capacity_scenario=None, eps=0.01):
         self.demand_scenario = demand_scenario
         self.capacity_scenario = capacity_scenario
-        self.max_time = 3600  # maximum number of time steps for the simulation
+        self.max_time = 720  # maximum number of time steps for the simulation
         self.delta_t = 10  # time in seconds per simulation step
         self.t = 0  # current time index of simulation
         self.counts_update_time = 120  # time intervals at which counts are updated
@@ -30,6 +30,8 @@ class Simulation:
         # Looping through every time step for the simulation
         for t in range(self.max_time):
 
+            print(t)
+
             if t % int(self.counts_update_time / self.delta_t) == 0:
                 self.network.update_latency(self.cars)  # update latency as a function of active cars
                 self.dp_network.update_latency(self.dp_cars)  # update latency for DP network
@@ -42,6 +44,10 @@ class Simulation:
             """
             new_cars = self.traffic_generator.new_cars(start_time=t, network=self.network, new_traffic=new_demand)
             self.cars.extend(new_cars)  # draw new demand for this time step
+
+            # print((new_demand))
+            # print((new_cars))
+            assert sum(new_demand) == len(new_cars)
 
             # update location for each car depending on current network state
             for car in self.cars:
@@ -70,12 +76,13 @@ class Simulation:
             """
             Log and print status
             """
-            if t % 600 == 0:
+            # print(t)
+            # if t % 600 == 0:
                 # print('--------------------')
-                print('[SimStatus] T = ', t)
+                # print('[SimStatus] T = ', t)
                 # print('--------------------')
                 # self._print_intermediate_stats()
-
+        self._print_intermediate_stats()
         return None
 
     def _print_intermediate_stats(self):
@@ -87,7 +94,7 @@ class Simulation:
         print('With privacy:')
         print('Cars in transit = ', len(self.dp_cars))
         print('Cars that completed trips = ', len(self.dp_completed_trips))
-        print('Total = ', self.traffic_generator.cars_generated)
+        print('Total = ', self.traffic_generator.dp_cars_generated)
         return None
 
     def save_summary_stats(self, fname=None):
@@ -104,10 +111,12 @@ class Simulation:
 
         stat = {}
 
-        completed_car_id = [car.id for car in self.completed_trips]
-        dp_completed_car_id = [car.id for car in self.dp_completed_trips]
+        completed_car_id = {car.id for car in self.completed_trips}
+        dp_completed_car_id = {car.id for car in self.dp_completed_trips}
 
-        common_id = [i for i in completed_car_id if i in dp_completed_car_id]
+        common_id = completed_car_id.intersection(dp_completed_car_id)
+
+        # print('Computed common id')
 
         for car in self.completed_trips:
             if car.id in common_id:
@@ -115,19 +124,25 @@ class Simulation:
                                 'tt': (car.finish_time - car.start_time) * self.delta_t,
                                 'est_tt': car.estimated_trip_time}
 
+        # print('ckpt 1')
+
         for car in self.dp_completed_trips:
             if car.id in common_id:
                 stat[car.id]['dp_path'] = car.path
                 stat[car.id]['dp_tt'] = (car.finish_time - car.start_time) * self.delta_t
                 stat[car.id]['dp_est_tt'] = car.estimated_trip_time
 
+        # print('ckpt 2')
+
         # Compute performance metrics
         stat_df = pd.DataFrame(stat.values())
         stat_df['dp_induced_excess_tt'] = stat_df['dp_tt'] - stat_df['tt']
         stat_df['path_similarity'] = stat_df.apply(
-            lambda x: len(set(x.path).intersection(x.dp_path)) *2 / (len(x.path) + len(x.dp_path)), axis=1)
+            lambda x: len(set(x.path).intersection(x.dp_path)) * 2 / (len(x.path) + len(x.dp_path)), axis=1)
         stat_df['tt_est_error'] = stat_df['tt'] - stat_df['est_tt']
         stat_df['dp_tt_est_error'] = stat_df['dp_tt'] - stat_df['dp_est_tt']
+
+        # print('ckpt 3')
 
         # retaining only relevant columns and saving the results
         stat_df.drop(columns=['path', 'dp_path'], inplace=True)
