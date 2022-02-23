@@ -8,9 +8,9 @@ import numpy as np
 
 class DPNetwork(Network):
 
-    def __init__(self, eps=None):
+    def __init__(self, eps=None, capacity_scenario=None):
 
-        Network.__init__(self)
+        Network.__init__(self, capacity_scenario=capacity_scenario)
 
         self.epsilon = eps
 
@@ -62,4 +62,8 @@ class DPNetwork(Network):
         """
         Need to override and estimate travel time based on noisy counts measurement
         """
-        return self.dp_min_distance_matrix[origin, destination]
+        path = self.shortest_path(origin, destination)
+        tt = 0
+        for edge_index in path:
+            tt = self.dp_latency[edge_index]
+        return tt

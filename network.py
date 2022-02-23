@@ -6,9 +6,11 @@ import pandas as pd
 
 class Network:
 
-    def __init__(self):
+    def __init__(self, capacity_scenario=None):
 
-        self.city = 'Chicago'
+        self.city = 'SiouxFalls'
+
+        self.capacity_scenario = capacity_scenario
 
         self.df_edges = pd.read_csv("Locations/" + self.city + "/edges.csv")
         self.df_vertices = pd.read_csv("Locations/" + self.city + "/vertices.csv")
@@ -36,6 +38,13 @@ class Network:
     def _compute_c(self):
         flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
         c = [flow[i] * self.edge_distance[i] / self.edge_max_speed[i] for i in range(len(flow))]
+
+        if self.capacity_scenario == 'low':
+            c = [0.5 * capacity for capacity in c]
+
+        if self.capacity_scenario == 'high':
+            c = [1.5 * capacity for capacity in c]
+
         return c
 
     def _compute_nodes_to_edge(self):
@@ -135,4 +144,11 @@ class Network:
         return self.edge_distance[edge_index] / self.latency[edge_index]
 
     def estimate_travel_time(self, origin, destination):
-        return self.min_distance_matrix[origin, destination]
+        path = self.shortest_path(origin, destination)
+        tt = 0
+        for edge_index in path:
+            tt = self.latency[edge_index]
+        return tt
+
+    def edge_capacity_list(self):
+        return self.edge_capacity

@@ -1,6 +1,8 @@
 """
 Define and run the simulation environment
 """
+import pandas as pd
+
 from network import Network
 from dp_network import DPNetwork
 from traffic_generator import TrafficGenerator
@@ -8,13 +10,15 @@ from traffic_generator import TrafficGenerator
 
 class Simulation:
 
-    def __init__(self):
-        self.max_time = 1000  # maximum number of time steps for the simulation
+    def __init__(self, demand_scenario=None, capacity_scenario=None):
+        self.demand_scenario = demand_scenario
+        self.capacity_scenario = capacity_scenario
+        self.max_time = 3600  # maximum number of time steps for the simulation
         self.delta_t = 10  # time in seconds per simulation step
         self.t = 0  # current time index of simulation
-        self.network = Network()  # road network with users
-        self.dp_network = DPNetwork(eps=0.01)  # road network with DP routing
-        self.traffic_generator = TrafficGenerator(delta_t=self.delta_t)
+        self.network = Network(capacity_scenario=capacity_scenario)  # road network with users
+        self.dp_network = DPNetwork(eps=0.01, capacity_scenario=capacity_scenario)  # road network with DP routing
+        self.traffic_generator = TrafficGenerator(delta_t=self.delta_t, demand_scenario=demand_scenario)
         self.cars = []  # list of current cars in the network
         self.dp_cars = []  # list of current cars routed with DP
         self.completed_trips = []  # list of cars whose trips are completed
@@ -65,14 +69,14 @@ class Simulation:
             Log and print status
             """
             if t % 600 == 0:
-                print('--------------------')
+                # print('--------------------')
                 print('[SimStatus] T = ', t)
-                print('--------------------')
-                self.print_intermediate_stats()
+                # print('--------------------')
+                # self._print_intermediate_stats()
 
         return None
 
-    def print_intermediate_stats(self):
+    def _print_intermediate_stats(self):
         print('No privacy:')
         print('Cars in transit = ', len(self.cars))
         print('Cars that completed trips = ', len(self.completed_trips))
@@ -84,30 +88,75 @@ class Simulation:
         print('Total = ', self.traffic_generator.cars_generated)
         return None
 
-    def print_summary_stats(self):
-        # TODO: identify appropriate stats to print
-        """
-        Examples of statistics that might be relevant?
-        Error in travel time prediction for each car
-        """
-
+    def save_summary_stats(self, fname=None):
         """
         Metrics:
             For a car, difference in trip time between private and non-private version
             Total trip time
             When are cars assigned the ''same'' route? (at most 10% of edges are different?)
-        
-        Scenarios:
-            Low demand
-            Baseline demand <- currently using
-            High demand 
-            
-            Low capacity
-            Baseline capacity <- currently being used
-            High capacity
-            
-            Maybe consider one more big network? Nope for now! 
+
         """
 
+        """
+        Efficiently store information in a dictionary with id = car.id
+        """
+        stat = {}
+
+        completed_car_id = [car.id for car in self.completed_trips]
+        dp_completed_car_id = [car.id for car in self.dp_completed_trips]
+
+        common_id = [i for i in completed_car_id if i in dp_completed_car_id]
+
+        for car in self.completed_trips:
+            if car.id in common_id:
+                stat[car.id] = {'path': car.path,
+                                'tt': (car.finish_time - car.start_time) * self.delta_t,
+                                'est_tt': car.estimated_trip_time}
+
+        for car in self.dp_completed_trips:
+            if car.id in common_id:
+                stat[car.id]['dp_path'] = car.path
+                stat[car.id]['dp_tt'] = (car.finish_time - car.start_time) * self.delta_t
+                stat[car.id]['dp_est_tt'] = car.estimated_trip_time
+
+        # Compute performance metrics
+        stat_df = pd.DataFrame(stat.values())
+        stat_df['dp_induced_excess_tt'] = stat_df['dp_tt'] - stat_df['tt']
+        stat_df['path_similarity'] = stat_df.apply(
+            lambda x: len(set(x.path).intersection(x.dp_path)) *2 / (len(x.path) + len(x.dp_path)), axis=1)
+        stat_df['tt_est_error'] = stat_df['tt'] - stat_df['est_tt']
+        stat_df['dp_tt_est_error'] = stat_df['dp_tt'] - stat_df['dp_est_tt']
+
+        # retaining only relevant columns
+        stat_df.drop(columns=['path', 'dp_path'], inplace=True)
+
+        # saving dataframe as csv
+        stat_df.to_csv(fname + '.csv', index=False, sep=',')
+
+        """
+        Extract other edge params
+        """
+
+        lambda_path = fname.split('/')[0] + '/lambda_'
+        if self.demand_scenario is None:
+            lambda_path = lambda_path + 'baseline.csv'
+        if self.demand_scenario == 'low':
+            lambda_path = lambda_path + 'low.csv'
+        if self.demand_scenario == 'high':
+            lambda_path = lambda_path + 'high.csv'
+
+        lambda_df = pd.DataFrame({'lambda': self.traffic_generator.poisson_parameters()})
+        lambda_df.to_csv(lambda_path, index=False, sep=',')
+
+        capacity_path = fname.split('/')[0] + '/capacity_'
+        if self.capacity_scenario is None:
+            capacity_path = capacity_path + 'baseline.csv'
+        if self.capacity_scenario == 'low':
+            capacity_path = capacity_path + 'low.csv'
+        if self.capacity_scenario == 'high':
+            capacity_path = capacity_path + 'high.csv'
+
+        capacity_df = pd.DataFrame({'capacity': self.network.edge_capacity_list()})
+        capacity_df.to_csv(capacity_path, index=False, sep=',')
 
         return None
