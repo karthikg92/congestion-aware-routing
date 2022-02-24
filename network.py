@@ -18,37 +18,50 @@ class Network:
         self.num_edges = self.df_edges.shape[0]
         self.num_vertices = self.df_vertices.shape[0]
 
+        # max speed is in km/hr in the dataset. Converting to m/s
         self.edge_max_speed = (self.df_edges['speed'] * 1000 / 3600).to_list()
         self.edge_distance = self.df_edges['length'].to_list()
-        self.edge_capacity = self._compute_c()
 
+        """
+        The edge flow capacity presented in the dataset is 0.1 the flow capacity of the whole day
+        Thus, the 2.4 division is edge flow capacity for a day
+        The subsequent division by 3600 is edge flow capacity per second
+        """
+        self.edge_flow_capacity = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
+
+        # load mapping from counts to flow # TODO: better variable name
+        _, self.x_star = np.load('counts2flow_LUT_ymax200.npy')
+
+        # Dictionary with key (origin, destination) and value as edge index
         self.nodes_to_edge = self._compute_nodes_to_edge()
 
         # Current traffic state of the network
         self.traffic_count = np.zeros(self.num_edges)  # zero cars on all edges
 
-        # Current latency of network. Just for initialization
+        # Latency of network. Current value will be updated
         self.latency = [self.edge_distance[e]/self.edge_max_speed[e] for e in range(self.num_edges)]
 
         # track link utilization
-        self.edge_utilization = np.zeros(self.num_edges)
-        self.num_latency_updates = 0
+        self.edge_utilization = np.zeros((1, self.num_edges))
 
+        # shortest path routing attributes
         self.predecessor_matrix = None
         self.min_distance_matrix = None
 
-        self.num_cars_generated = 0
-
-    def _compute_c(self):
-        flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
-        c = [flow[i] * self.edge_distance[i] / self.edge_max_speed[i] for i in range(len(flow))]
-
-        if self.capacity_scenario == 'low':
-            c = [0.5 * capacity for capacity in c]
-        if self.capacity_scenario == 'high':
-            c = [1.5 * capacity for capacity in c]
-
-        return c
+    # """
+    # Computes the edge capacity for different scenarios
+    # Not currently used as we decided to stick to the baseline capacity
+    # """
+    # def _compute_c(self):
+    #     flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
+    #     c = [flow[i] * self.edge_distance[i] / self.edge_max_speed[i] for i in range(len(flow))]
+    #
+    #     if self.capacity_scenario == 'low':
+    #         c = [0.5 * capacity for capacity in c]
+    #     if self.capacity_scenario == 'high':
+    #         c = [1.5 * capacity for capacity in c]
+    #
+    #     return c
 
     def _compute_nodes_to_edge(self):
         n2e = {}
@@ -60,21 +73,20 @@ class Network:
         return n2e
 
     def _counts_to_latency(self, traffic_count):
-        # TODO: confirm
         """
-        Use self.traffic_count data
+        Input: Traffic count on each link
         Return: latency array
-        Formula:    a = length[e]/max_speed[e]
-                    b = 0.15
-
-        latency[e] = a (1 + b * (counts[e] / capacity[e])^4 )
+        Formula: Refer to slack notes # TODO: Write the formula
         """
         b = 0.15
         latency = []
+
         for e in range(self.num_edges):
 
-            a = self.edge_distance[e] / self.edge_max_speed[e]  # Can save it as an object attribute
-            latency.append(a * (1 + b * (traffic_count[e] / self.edge_capacity[e]) ** 4))
+            y_hat = traffic_count[e] / (self.edge_flow_capacity[e] * self.edge_distance[e] / self.edge_max_speed[e])
+            j = int(y_hat * 1e3)
+            a = self.edge_distance[e] / self.edge_max_speed[e]
+            latency.append(a * (1 + b * (self.x_star[j]) ** 4))
 
         return latency
 
@@ -121,15 +133,7 @@ class Network:
         self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)
 
         # update link utilization
-        self.edge_utilization = self._update_edge_utilization(self.traffic_count)
-
-        # update capacity of edges TODO: revisit
-        flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
-        c = [flow[i] * self.edge_distance[i] / self.edge_speed(i) for i in range(len(flow))]
-        self.edge_capacity = c
-
-        # for e in range(self.num_edges):
-        #     self.edge_capacity[e] = self.latency[e] * self.df_edges['capacity']
+        self.edge_utilization = self._compute_edge_utilization(self.traffic_count)
 
         return None
 
@@ -151,13 +155,12 @@ class Network:
 
         return dist, pre
 
-    def _update_edge_utilization(self, traffic):
-        edge_utilization = np.zeros(self.num_edges)
-        for i in range(self.num_edges):
-            total_traffic = self.edge_utilization[i] * self.edge_capacity[i] * self.num_latency_updates
-            new_traffic = traffic[i]
-            edge_utilization[i] = (total_traffic + new_traffic) / (self.num_latency_updates + 1) / self.edge_capacity[i]
-        self.num_latency_updates += 1
+    def _compute_edge_utilization(self, traffic):
+        edge_utilization = np.zeros((1, self.num_edges))
+        for e in range(self.num_edges):
+            y_hat = traffic[e] / (self.edge_flow_capacity[e] * self.edge_distance[e] / self.edge_max_speed[e])
+            j = int(y_hat * 1e3)  # Update if the counts to flow datafile changes
+            edge_utilization[0, e] = self.x_star[j]
         return edge_utilization
 
     def edge_length(self, edge_index):
@@ -174,4 +177,4 @@ class Network:
         return tt
 
     def edge_capacity_list(self):
-        return self.edge_capacity
+        return self.edge_flow_capacity

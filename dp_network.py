@@ -39,15 +39,9 @@ class DPNetwork(Network):
         self.dp_latency = self._counts_to_latency(self.dp_traffic_counts)
 
         # update predecessor matrix that stores the shortest paths
-        self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)  # TODO:
-        # Dont need to compute this!
+        # self.min_distance_matrix, self.predecessor_matrix = self._update_predecessor_matrix(self.latency)
+        # Don't need to compute this since shortest path is only needed for routing!
         self.dp_min_distance_matrix, self.dp_predecessor_matrix = self._update_predecessor_matrix(self.dp_latency)
-
-
-        # update capacity of edges TODO: check
-        flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
-        c = [flow[i] * self.edge_distance[i] / self.edge_speed(i) for i in range(len(flow))]
-        self.edge_capacity = c
 
         return None
 

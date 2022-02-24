@@ -19,8 +19,7 @@ class TrafficGenerator:
         self.demand_df = pd.read_csv("Locations/" + self.city + "/od.csv")
 
         # poisson arrival rate
-        self.demand_df['lambda'] = self.demand_df['volume'] / (2.4*60*60) * delta_t
-        self.demand_df['lambda'] = self.demand_df['volume'] / (2.4*60*60) * delta_t
+        self.demand_df['lambda'] = self.demand_df['volume'] / (24*60*60) * delta_t * 4
 
         if self.demand_scenario == 'low':
             self.demand_df['lambda'] = 0.5 * self.demand_df['lambda']  # TODO: FIXME
@@ -49,19 +48,15 @@ class TrafficGenerator:
         if new_traffic is None:
             new_traffic = np.random.poisson(self.demand_df['lambda'])  # number of new cars
 
-        # new_traffic_df = self.demand_df[new_traffic > 0]  # identifying appropriate OD pairs
-
         new_cars = []  # create new car list
 
         # create new cars for each of these OD pairs
         for index in range(self.demand_df.shape[0]):
+
             if new_traffic[index] > 0:
-                # print('Added OD pair')
-                # print('No of cars = ', new_traffic[index])
-                # introducing multiple cars within the same OD pair
+
                 # TODO: Can potentially platoon these cars into one attribute
                 for _ in range(new_traffic[index]):
-                    # print('Added a car for the OD pair')
                     origin = int(self.demand_df.iloc[index]['origin'])
                     destination = int(self.demand_df.iloc[index]['destination'])
 

@@ -73,8 +73,8 @@ Adding privacy leads to minimal impact (across the three different capacity)
 
 def print_results(df):
     print('')
-    print('Total travel time increase due to DP (sec):', df['dp_tt'].mean() - df['tt'].mean())
-    print('Fractional increase in total travel time due to DP: ',
+    print('Average travel time increase per car due to DP (sec):', df['dp_tt'].mean() - df['tt'].mean())
+    print('Fractional increase in travel time due to DP: ',
           (df['dp_tt'].mean() - df['tt'].mean()) / df['tt'].mean())
 
     print('Fraction of cars with no additional travel time: ',
