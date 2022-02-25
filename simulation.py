@@ -17,7 +17,7 @@ class Simulation:
     def __init__(self, demand_scenario=None, capacity_scenario=None, eps=0.01, fname=None):
         self.demand_scenario = demand_scenario
         self.capacity_scenario = capacity_scenario
-        self.max_time = 10  # maximum number of time steps for the simulation
+        self.max_time = 360 * 2  # maximum number of time steps for the simulation
         self.delta_t = 10  # time in seconds per simulation step
         self.t = 0  # current time index of simulation
         self.counts_update_time = 120  # time intervals at which counts are updated
