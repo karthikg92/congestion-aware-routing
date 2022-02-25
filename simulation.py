@@ -17,7 +17,7 @@ class Simulation:
     def __init__(self, demand_scenario=None, capacity_scenario=None, eps=0.01, fname=None):
         self.demand_scenario = demand_scenario
         self.capacity_scenario = capacity_scenario
-        self.max_time = 720  # maximum number of time steps for the simulation
+        self.max_time = 10  # maximum number of time steps for the simulation
         self.delta_t = 10  # time in seconds per simulation step
         self.t = 0  # current time index of simulation
         self.counts_update_time = 120  # time intervals at which counts are updated
@@ -108,7 +108,7 @@ class Simulation:
                 # increment time counter
                 t += 1
 
-        self._print_intermediate_stats()
+        # self._print_intermediate_stats()
         return None
 
     def _update_run_log(self, log_t):
@@ -141,7 +141,8 @@ class Simulation:
         print('Total = ', self.traffic_generator.dp_cars_generated)
         return None
 
-    def save_summary_stats(self):
+    def _compute_car_stats_df(self):
+
         """
         Metrics:
             For a car, difference in trip time between private and non-private version
@@ -182,32 +183,31 @@ class Simulation:
 
         # retaining only relevant columns and saving the results
         stat_df.drop(columns=['path', 'dp_path'], inplace=True)
+
+        return stat_df
+
+    def _save_capacity(self):
+        capacity_df = pd.DataFrame({'capacity': self.network.edge_capacity_list()})
+        capacity_df.to_csv(self.fname + '_edgeflowcapacity.csv', index=False, sep=',')
+
+    def _save_critical_counts(self):
+        counts_df = pd.DataFrame({'counts': self.network.critical_counts_list()})
+        counts_df.to_csv(self.fname + '_critical_counts.csv', index=False, sep=',')
+
+    def _save_demand(self):
+        demand_df = pd.DataFrame({'lambda': self.traffic_generator.poisson_parameters()})
+        demand_df.to_csv(self.fname + '_lambda.csv', index=False, sep=',')
+
+    def save_summary_stats(self):
+
+        # car specific stats
+        stat_df = self._compute_car_stats_df()
         stat_df.to_csv(self.fname + '.csv', index=False, sep=',')
 
-        """
-        Extract other edge params
-        """
+        self._save_capacity()
 
-        # lambda_path = fname.split('/')[0] + '/lambda_'
-        # if self.demand_scenario is None or self.demand_scenario == 'baseline':
-        #     lambda_path = lambda_path + 'baseline.csv'
-        # if self.demand_scenario == 'low':
-        #     lambda_path = lambda_path + 'low.csv'
-        # if self.demand_scenario == 'high':
-        #     lambda_path = lambda_path + 'high.csv'
-        #
-        # lambda_df = pd.DataFrame({'lambda': self.traffic_generator.poisson_parameters()})
-        # lambda_df.to_csv(lambda_path, index=False, sep=',')
-        #
-        # capacity_path = fname.split('/')[0] + '/capacity_'
-        # if self.capacity_scenario is None or self.capacity_scenario == 'baseline':
-        #     capacity_path = capacity_path + 'baseline.csv'
-        # if self.capacity_scenario == 'low':
-        #     capacity_path = capacity_path + 'low.csv'
-        # if self.capacity_scenario == 'high':
-        #     capacity_path = capacity_path + 'high.csv'
-        #
-        # capacity_df = pd.DataFrame({'capacity': self.network.edge_capacity_list()})
-        # capacity_df.to_csv(capacity_path, index=False, sep=',')
+        self._save_demand()
+
+        self._save_critical_counts()
 
         return None

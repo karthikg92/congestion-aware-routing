@@ -29,6 +29,9 @@ class Network:
         """
         self.edge_flow_capacity = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
 
+        self.critical_counts = [self.edge_flow_capacity[i] * self.edge_distance[i] / self.edge_max_speed[i]
+                                for i in range(self.num_edges)]
+
         # load mapping from counts to flow # TODO: better variable name
         _, self.x_star = np.load('counts2flow_LUT_ymax200.npy')
 
@@ -178,3 +181,7 @@ class Network:
 
     def edge_capacity_list(self):
         return self.edge_flow_capacity
+
+    def critical_counts_list(self):
+        return self.critical_counts
+

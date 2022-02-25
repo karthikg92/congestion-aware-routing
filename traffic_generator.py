@@ -19,12 +19,12 @@ class TrafficGenerator:
         self.demand_df = pd.read_csv("Locations/" + self.city + "/od.csv")
 
         # poisson arrival rate
-        self.demand_df['lambda'] = self.demand_df['volume'] / (24*60*60) * delta_t * 4
-
+        if self.demand_scenario == 'baseline' or self.demand_scenario is None:
+            self.demand_df['lambda'] = self.demand_df['volume'] / (24*60*60) * delta_t * 4
         if self.demand_scenario == 'low':
-            self.demand_df['lambda'] = 0.5 * self.demand_df['lambda']  # TODO: FIXME
+            self.demand_df['lambda'] = self.demand_df['volume'] / (24*60*60) * delta_t * 2
         if self.demand_scenario == 'high':
-            self.demand_df['lambda'] = 5 * self.demand_df['lambda']
+            self.demand_df['lambda'] = self.demand_df['volume'] / (24*60*60) * delta_t * 6
 
         # track total cars that have been created
         self.cars_generated = 0

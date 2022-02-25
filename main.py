@@ -1,5 +1,7 @@
 from simulation import Simulation
 import numpy as np
+import os
+import shutil
 
 """
 Scenarios:
@@ -25,30 +27,38 @@ Experiment 1
 Compare DP network with non-noisy version
 Fixed demand and capacity
 """
+for eps in [0.01, 0.1, 0.25, 0.5]:
 
-for demand in ['baseline']:
+    # eliminate previous results
+    folder = 'results/eps' + str(eps)
+    try:
+        shutil.rmtree(folder)
+    except:
+        pass
 
-    for capacity in ['baseline']:
+    # create a new folder
+    os.mkdir(folder)
+
+    print('-------------------------------------')
+    print('------------Epsilon %.2f ------------' % eps)
+    print('-------------------------------------')
+
+    for demand in ['baseline', 'low', 'high']:
 
         ####################################################
         #  Main Experiment
         ####################################################
 
         print('\n')
-        print('----- %s demand and %s capacity simulation -----' % (demand, capacity))
+        print('----- %s demand simulation -----' % demand)
 
         # Path for results
-        name = 'results/' + demand + '_demand_' + capacity + '_capacity'
+        name = folder + '/' + demand + '_demand'
 
-        sim = Simulation(demand_scenario=demand, capacity_scenario=capacity, eps=0.01, fname=name)  # Initialize
+        sim = Simulation(demand_scenario=demand, eps=eps, fname=name)  # Initialize
         sim.run()  # Run simulation
         sim.save_summary_stats()  # Save results
 
-        # some logging for debug purposes
-        # print('Average lambda: ', np.mean(sim.traffic_generator.poisson_parameters()))
-        # print('Total lambda: ', np.sum(sim.traffic_generator.poisson_parameters()))
-        # print('Average link utilization: ', np.mean(sim.network.edge_utilization))
-        # print('Average utilization = ', np.mean(sim.network.hacky_tracker))
 
 
 """
