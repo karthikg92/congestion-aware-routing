@@ -1,11 +1,10 @@
-Average travel time without privacy (sec), 591.94 
-Average travel time with DP (sec), 599.93 
-Travel time increase due to DP (sec), 7.99 
-Percentage increase in travel time due to DP (percent), 1.35 
-Percentage cars with no additional travel time due to DP (percent), 41.26 
-Percentage cars with no change in route due to DP (percent), 88.34 
-Percentage cars with no change in route due to DP (percent), 88.34 
-Average number of vehicles joining the network every time step, 166.94 
-Min link utilization, 0.04 
-Max link utilization, 1.14 
-Average link utilization, 0.52 
+Average travel time without privacy (sec), 591.9356 
+Average travel time with DP (sec), 599.9283 
+Travel time increase due to DP (sec), 7.9927 
+Percentage increase in travel time due to DP (percent), 1.3503 
+Percentage cars with no additional travel time due to DP (percent), 41.2559 
+Percentage cars with no change in route due to DP (percent), 88.3435 
+Average number of vehicles joining the network every time step, 166.9444 
+Min link utilization, 0.0449 
+Max link utilization, 1.1376 
+Average link utilization, 0.5175 

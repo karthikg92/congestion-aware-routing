@@ -28,6 +28,7 @@ Compare DP network with non-noisy version
 Fixed demand and capacity
 """
 for eps in [0.01, 0.1, 0.25, 0.5]:
+# for eps in [0.01]:
 
     # eliminate previous results
     folder = 'results/eps' + str(eps)

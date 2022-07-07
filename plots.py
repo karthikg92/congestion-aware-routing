@@ -27,20 +27,30 @@ data_path = 'results/eps0.1/'
 """
 Result # 1: Capacities on most links are large enough to fall into our analysis regime
 """
+plt.rcParams.update({'font.size': 10})
 
 df_counts = pd.read_csv(data_path + 'baseline_demand_critical_counts.csv')
-c = df_counts['counts'].to_list()
+c = (df_counts['counts']).to_list()
 count, bins_count = np.histogram(c, bins=500)
-pdf = count / sum(count)
-cdf = np.cumsum(pdf)
-plt.plot(bins_count[1:], cdf, color="black")
+
+plt.hist(c, bins=50, color='tab:grey')
+# pdf = count / sum(count)
+# cdf = np.cumsum(pdf)
+# plt.plot(bins_count[1:], cdf, color="black")
 
 # reference lines
-plt.axvline(x=127, ymin=0.05, ymax=0.95, ls='--', color='tab:blue', label='Counts = 127')
+plt.axvline(x=127, ymin=0.00, ymax=1.00, ls='--', color='tab:red', label='Counts = 127', linewidth=2)
 
-plt.legend()
-plt.xlabel('Critical traffic counts')
-plt.ylabel('Cumulative mass function')
+plt.text(170, 12, 'threshold = 127', color='tab:red')
+# plt.legend()
+plt.xlabel('$\delta$-critical counts')
+# plt.ylabel('Cumulative mass function')
+plt.ylabel('Number of roads')
+
+fig = plt.gcf()
+fig.set_size_inches(3.54, 2.5)
+
+plt.tight_layout()
 
 plt.savefig('results/critical_counts.png', dpi=250)
 plt.close()
@@ -70,47 +80,43 @@ def summarize_results(path=None, df_results=None, df_lambda=None, utilization_ar
 
     with open(path, 'a') as f:
 
-        f.write('Average travel time without privacy (sec), %.2f \n'
+        f.write('Average travel time without privacy (sec), %.4f \n'
                 % (df_results['tt'].mean())
                 )
 
-        f.write('Average travel time with DP (sec), %.2f \n'
+        f.write('Average travel time with DP (sec), %.4f \n'
                 % (df_results['dp_tt'].mean())
                 )
 
-        f.write('Travel time increase due to DP (sec), %.2f \n'
+        f.write('Travel time increase due to DP (sec), %.4f \n'
                 % (df_results['dp_tt'].mean() - df_results['tt'].mean())
                 )
 
-        f.write('Percentage increase in travel time due to DP (percent), %.2f \n'
+        f.write('Percentage increase in travel time due to DP (percent), %.4f \n'
                 % (100 * (df_results['dp_tt'].mean() - df_results['tt'].mean()) / df_results['tt'].mean())
                 )
 
-        f.write('Percentage cars with no additional travel time due to DP (percent), %.2f \n'
+        f.write('Percentage cars with no additional travel time due to DP (percent), %.4f \n'
                 % (100 * sum(df_results['dp_induced_excess_tt'] == 0) / df_results.shape[0])
                 )
 
-        f.write('Percentage cars with no change in route due to DP (percent), %.2f \n'
+        f.write('Percentage cars with no change in route due to DP (percent), %.4f \n'
                 % (100 * sum(df_results['path_similarity'] == 1) / df_results.shape[0])
                 )
 
-        f.write('Percentage cars with no change in route due to DP (percent), %.2f \n'
-                % (100 * sum(df_results['path_similarity'] == 1) / df_results.shape[0])
-                )
-
-        f.write('Average number of vehicles joining the network every time step, %.2f \n'
+        f.write('Average number of vehicles joining the network every time step, %.4f \n'
                 % (df_lambda['lambda'].sum())
                 )
 
-        f.write('Min link utilization, %.2f \n'
+        f.write('Min link utilization, %.4f \n'
                 % (min(utilization))
                 )
 
-        f.write('Max link utilization, %.2f \n'
+        f.write('Max link utilization, %.4f \n'
                 % (max(utilization))
                 )
 
-        f.write('Average link utilization, %.2f \n'
+        f.write('Average link utilization, %.4f \n'
                 % (np.mean(utilization))
                 )
 
@@ -147,4 +153,3 @@ Result # 3:
 Higher the privacy requirement, higher the loss in performance
     - Vary epsilon, and plot the increase in total travel time for the three different capacity profiles
 """
-
