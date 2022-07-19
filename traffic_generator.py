@@ -30,7 +30,6 @@ class TrafficGenerator:
         self.cars_generated = 0
         self.dp_cars_generated = 0
 
-        # TODO: check if needed for final sims
         np.random.seed(1729)
 
     def new_demand(self):
@@ -55,7 +54,6 @@ class TrafficGenerator:
 
             if new_traffic[index] > 0:
 
-                # TODO: Can potentially platoon these cars into one attribute
                 for _ in range(new_traffic[index]):
                     origin = int(self.demand_df.iloc[index]['origin'])
                     destination = int(self.demand_df.iloc[index]['destination'])

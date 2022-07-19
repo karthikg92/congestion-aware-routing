@@ -1,5 +1,4 @@
 import numpy as np
-from car import Car
 from scipy.sparse.csgraph import shortest_path
 import pandas as pd
 
@@ -24,7 +23,7 @@ class Network:
 
         """
         The edge flow capacity presented in the dataset is 0.1 the flow capacity of the whole day
-        Thus, the 2.4 division is edge flow capacity for a day
+        Thus, the 2.4 division is edge flow capacity for a day.
         The subsequent division by 3600 is edge flow capacity per second
         """
         self.edge_flow_capacity = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
@@ -32,7 +31,7 @@ class Network:
         self.critical_counts = [self.edge_flow_capacity[i] * self.edge_distance[i] / self.edge_max_speed[i]
                                 for i in range(self.num_edges)]
 
-        # load mapping from counts to flow # TODO: better variable name
+        # load mapping from counts to flow
         _, self.x_star = np.load('counts2flow_LUT_ymax200.npy')
 
         # Dictionary with key (origin, destination) and value as edge index
@@ -51,21 +50,6 @@ class Network:
         self.predecessor_matrix = None
         self.min_distance_matrix = None
 
-    # """
-    # Computes the edge capacity for different scenarios
-    # Not currently used as we decided to stick to the baseline capacity
-    # """
-    # def _compute_c(self):
-    #     flow = (self.df_edges['capacity'] / 2.4 / 3600).to_list()
-    #     c = [flow[i] * self.edge_distance[i] / self.edge_max_speed[i] for i in range(len(flow))]
-    #
-    #     if self.capacity_scenario == 'low':
-    #         c = [0.5 * capacity for capacity in c]
-    #     if self.capacity_scenario == 'high':
-    #         c = [1.5 * capacity for capacity in c]
-    #
-    #     return c
-
     def _compute_nodes_to_edge(self):
         n2e = {}
         for i in range(self.num_edges):
@@ -79,7 +63,7 @@ class Network:
         """
         Input: Traffic count on each link
         Return: latency array
-        Formula: Refer to slack notes # TODO: Write the formula
+        Formula: Refer to paper for details
         """
         b = 0.15
         latency = []
@@ -143,7 +127,6 @@ class Network:
     def _update_predecessor_matrix(self, latency):
         """
         use the current latency estimates to update the predecessor matrix
-        return: none
         """
 
         # set up adjacency matrix

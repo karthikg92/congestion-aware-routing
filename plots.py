@@ -16,10 +16,6 @@ Adding privacy leads to minimal impact (across the three different demand profil
     - per-car increase (absolute numbers/ fractional increase) in travel time is small
     - Shortest paths do not change for most vehicles
 
-Result # 3:
-Higher the privacy requirement, higher the loss in performance
-    - Vary epsilon, and plot the increase in total travel time for the three different capacity profiles
-
 """
 
 data_path = 'results/eps0.1/'
@@ -141,15 +137,3 @@ for eps in [0.01, 0.1, 0.25, 0.5]:
         path = folder + '/' + demand + '_demand_summary.csv'
         summarize_results(path, df_results=df_results, utilization_array=utilization_array, df_lambda=df_lambda)
 
-
-
-# plt.hist(df['dp_induced_excess_tt'], bins=100)
-# plt.savefig(plot_path + 'excess_time_distribution_low.png')
-# plt.close()
-
-
-"""
-Result # 3:
-Higher the privacy requirement, higher the loss in performance
-    - Vary epsilon, and plot the increase in total travel time for the three different capacity profiles
-"""

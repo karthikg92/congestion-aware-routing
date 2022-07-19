@@ -108,7 +108,6 @@ class Simulation:
                 # increment time counter
                 t += 1
 
-        # self._print_intermediate_stats()
         return None
 
     def _update_run_log(self, log_t):
@@ -145,9 +144,9 @@ class Simulation:
 
         """
         Metrics:
-            For a car, difference in trip time between private and non-private version
-            Total trip time
-            When are cars assigned the ''same'' route? (at most 10% of edges are different?)
+            - For a vehicle, difference in trip time between private and non-private version
+            - Total trip time for vehicles
+            - Fraction of vehicles that are assigned the same route
         """
 
         """
@@ -205,9 +204,7 @@ class Simulation:
         stat_df.to_csv(self.fname + '.csv', index=False, sep=',')
 
         self._save_capacity()
-
         self._save_demand()
-
         self._save_critical_counts()
 
         return None

@@ -1,18 +1,11 @@
 """
 Class for each car
 
-State of each car:
-ID
-Location
-Planned path
+State of each car: ID, Location, Planned path
 
-Methods:
-Update location
-Trip stats
+Methods: Update location, Trip stats
 
-Trip stats includes:
-Total travel time
-Travel time on each link
+Trip stats includes: Total travel time, Travel time on each link
 """
 
 

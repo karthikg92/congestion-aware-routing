@@ -1,6 +1,4 @@
 from simulation import Simulation
-import numpy as np
-import os
 import shutil
 
 """
@@ -22,15 +20,16 @@ except:
     pass
 
 """
-Experiment 1
+Experiment objective:
 
-Compare DP network with non-noisy version
-Fixed demand and capacity
+Compare DP network with non-noisy version for
+- varying privacy requirements (epsilon value)
+- varying traffic demand (three demand scenarios)
 """
-for eps in [0.01, 0.1, 0.25, 0.5]:
-# for eps in [0.01]:
 
-    # eliminate previous results
+for eps in [0.01, 0.1, 0.25, 0.5]:
+
+    # plan to overwrite any saved results
     folder = 'results/eps' + str(eps)
     try:
         shutil.rmtree(folder)
@@ -59,16 +58,4 @@ for eps in [0.01, 0.1, 0.25, 0.5]:
         sim = Simulation(demand_scenario=demand, eps=eps, fname=name)  # Initialize
         sim.run()  # Run simulation
         sim.save_summary_stats()  # Save results
-
-
-
-"""
-Experiment 2
-
-Vary epsilon and observe the privacy-accuracy tradeoff
-"""
-
-# for eps in [0.01, 0.25, 0.5]:
-#     print('----- Experiments with eps = %f -----' % eps)
-#
 
